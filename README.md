@@ -15,15 +15,15 @@ $ sudo apt-get install python3-matplotlib
 
 You can run the app:
 
-$ ./gpuGraph.py
+$ ./shieldGraph.py
 
 or:
 
-$ python gpuGraph.py
+$ python shieldGraph.py
 
 or:
 
-$ python3 gpuGraph.py
+$ python3 shieldGraph.py
 
 <h2>Release Notes</h2>
 
