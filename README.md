@@ -1,5 +1,5 @@
-# gpuGraphTX
-A very simple moving graph of GPU activity for the NVIDIA Jetson TX1 and Jetson TX2. This allows visualization of GPU utilization.
+# ShieldInfoGraphTX
+A very simple moving graph of GPU & CPU activity for the NVIDIA Shield Tegra. This allows visualization of GPU & CPU utilization over ADB.
 
 ![GPU Activity Window](https://github.com/jetsonhacks/gpuGraphTX/blob/master/gpuGraph.png)
 
@@ -26,6 +26,10 @@ or:
 $ python3 gpuGraph.py
 
 <h2>Release Notes</h2>
+
+Forked from jetsonhacks on 1/15/2019
+* Use ADB for use on SHIELD
+* Add second graph for CPU usage
 
 Initial Release May, 2018
 * L4T 28.2 (JetPack 3.2)
