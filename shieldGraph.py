@@ -60,7 +60,7 @@ def initCpuGraph():
 
     cpuAx.set_xlim(60, 0)
     cpuAx.set_ylim(-5, 105)
-    cpuAx.set_title('CPU History')
+    cpuAx.set_title('Average CPU History')
     cpuAx.set_ylabel('CPU Usage (%)')
     cpuAx.set_xlabel('Seconds');
     cpuAx.grid(color='gray', linestyle='dotted', linewidth=1)
@@ -78,17 +78,16 @@ def updateGpuGraph(frame):
     global gpuLine
     global gpuAx
  
-    # Now draw the GPU usage
-    gpuy_list.popleft()
     x=subprocess.check_output(["adb shell cat /sys/devices/gpu.0/load"],shell=True)
-    
-    # The GPU load is stored as a percentage * 10, e.g 256 = 25.6%
-    gpuy_list.append(int(x)/10)
+    if x != "":
+        gpuy_list.popleft()
+        # The GPU load is stored as a percentage * 10, e.g 256 = 25.6%
+        gpuy_list.append(int(x)/10)
 
-    gpuLine.set_data(gpux_list,gpuy_list)
+        gpuLine.set_data(gpux_list,gpuy_list)
 
-    fill_lines_gpu.remove()
-    fill_lines_gpu=gpuAx.fill_between(gpux_list,0,gpuy_list, facecolor='cyan', alpha=0.50)
+        fill_lines_gpu.remove()
+        fill_lines_gpu=gpuAx.fill_between(gpux_list,0,gpuy_list, facecolor='cyan', alpha=0.50)
 
     return [gpuLine] + [fill_lines_gpu]
 
@@ -100,18 +99,19 @@ def updateCpuGraph(frame):
     global cpuLine
     global cpuAx
  
-    cpuy_list.popleft()
     y=subprocess.check_output(["adb shell dumpsys cpuinfo | grep TOTAL"],shell=True).decode("utf-8")
-    y=y.split()
-    y=y[0]
-    y=y.strip("%")
+    if y != "":
+        y=y.split()
+        y=y[0]
+        y=y.strip("%")
+        cpuy_list.popleft()
     
-    cpuy_list.append(round(float(y)))
+        cpuy_list.append(round(float(y)))
 
-    cpuLine.set_data(cpux_list,cpuy_list)
+        cpuLine.set_data(cpux_list,cpuy_list)
 
-    fill_lines_cpu.remove()
-    fill_lines_cpu=cpuAx.fill_between(cpux_list,0,cpuy_list, facecolor='red', alpha=0.50)
+        fill_lines_cpu.remove()
+        fill_lines_cpu=cpuAx.fill_between(cpux_list,0,cpuy_list, facecolor='red', alpha=0.50)
 
     return [cpuLine] + [fill_lines_cpu]
 
