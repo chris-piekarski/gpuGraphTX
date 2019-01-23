@@ -36,6 +36,9 @@ cpux_list = deque(np.linspace(60,0,num=240))
 fill_lines_gpu=0
 fill_lines_cpu=0
 
+cpu_user_prev=0
+cpu_idle_prev=0
+
 def initGpuGraph():
     global gpuAx
     global gpuLine
@@ -60,7 +63,7 @@ def initCpuGraph():
 
     cpuAx.set_xlim(60, 0)
     cpuAx.set_ylim(-5, 105)
-    cpuAx.set_title('Average CPU History')
+    cpuAx.set_title('CPU History')
     cpuAx.set_ylabel('CPU Usage (%)')
     cpuAx.set_xlabel('Seconds');
     cpuAx.grid(color='gray', linestyle='dotted', linewidth=1)
@@ -91,22 +94,38 @@ def updateGpuGraph(frame):
 
     return [gpuLine] + [fill_lines_gpu]
 
-#Use average from dumpsys cpuinfo for now
+#Calculate realtime from /proc/stat
 def updateCpuGraph(frame):
     global fill_lines_cpu
     global cpuy_list
     global cpux_list
     global cpuLine
     global cpuAx
+    global cpu_user_prev
+    global cpu_idle_prev
  
-    y=subprocess.check_output(["adb shell dumpsys cpuinfo | grep TOTAL"],shell=True).decode("utf-8")
-    if y != "":
-        y=y.split()
-        y=y[0]
-        y=y.strip("%")
+    dump=subprocess.check_output(["adb shell cat /proc/stat"],shell=True).decode("utf-8")
+    if dump != "":
+        dump=dump.split("\n")
+        tl=dump[0].split()
+        cpu_user=int(tl[1])+int(tl[2])+int(tl[3])+int(tl[4])+int(tl[5])+int(tl[6])+int(tl[7])
+        cpu_idle=int(tl[4])
+
+        if cpu_user_prev == 0 or cpu_idle_prev == 0:
+            cpu_user_prev = cpu_user
+            cpu_idle_prev = cpu_idle
+            return [ ]
+
+        diff_user=cpu_user - cpu_user_prev
+        diff_idle=cpu_idle - cpu_idle_prev
+        diff_usage=(1000*(diff_user-diff_idle)/diff_user+5)/10
+        
+        cpu_user_prev=cpu_user
+        cpu_idle_prev=cpu_idle
+
         cpuy_list.popleft()
     
-        cpuy_list.append(round(float(y)))
+        cpuy_list.append(round(float(diff_usage)))
 
         cpuLine.set_data(cpux_list,cpuy_list)
 
@@ -119,9 +138,9 @@ def updateCpuGraph(frame):
 
 # Keep a reference to the FuncAnimation, so it does not get garbage collected
 gpuAnimation = FuncAnimation(figGpu, updateGpuGraph, frames=200,
-                    init_func=initGpuGraph,  interval=250, blit=True)
+                    init_func=initGpuGraph,  interval=1000, blit=True)
 cpuAnimation = FuncAnimation(figCpu, updateCpuGraph, frames=200,
-                    init_func=initCpuGraph,  interval=250, blit=True)
+                    init_func=initCpuGraph,  interval=1000, blit=True)
 
 
 plt.show()
