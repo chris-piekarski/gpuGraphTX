@@ -2,6 +2,8 @@
 A very simple moving graph of GPU & CPU activity for the NVIDIA Shield Tegra. This allows visualization of GPU & CPU utilization over ADB.
 
 ![GPU Activity Window](https://github.com/jetsonhacks/gpuGraphTX/blob/master/gpuGraph.png)
+![CPU Activity Window](https://github.com/jetsonhacks/gpuGraphTX/blob/master/cpuGraph.png)
+
 
 The graph is implemented as an animated Python Matplotlib graph. The app requires the Python Matplotlib library.
 
