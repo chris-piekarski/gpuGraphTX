@@ -8,11 +8,6 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from collections import deque
 
-# On the Jetson TX1 this is a symbolic link to:
-# gpuLoadFile="/sys/devices/platform/host1x/57000000.gpu/load"
-# On the Jetson TX2, this is a symbolic link to:
-# gpuLoadFile="/sys/devices/platform/host1x/17000000.gp10b/load"
-
 figDec,decAx = plt.subplots()
 
 figDec.set_facecolor('#F2F1F0')
@@ -56,7 +51,6 @@ def updateDecGraph(frame):
  
     dump=subprocess.check_output(["adb shell cat /sys/bus/platform/drivers/nvdec/54480000.nvdec/load"],shell=True).decode("utf-8")
 
-    #dump=subprocess.check_output(["adb shell cat /sys/kernel/debug/nvdec/actmon_avg"],shell=True).decode("utf-8")
     if dump != "":
         actmon_avg=int(dump.strip())
 
