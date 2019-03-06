@@ -15,6 +15,8 @@ from collections import deque
 
 figCpu,cpuAx = plt.subplots()
 figGpu,gpuAx = plt.subplots()
+figMem,memAx = plt.subplots()
+
 
 figGpu.set_facecolor('#F2F1F0')
 figGpu.canvas.set_window_title('GPU Activity Monitor')
@@ -22,9 +24,14 @@ figGpu.canvas.set_window_title('GPU Activity Monitor')
 figCpu.set_facecolor('#F2F1F0')
 figCpu.canvas.set_window_title('CPU Activity Monitor')
 
+figMem.set_facecolor('#F2F1F0')
+figMem.canvas.set_window_title('Memory Activity Monitor')
+
+
 # For the comparison
 gpuLine, = gpuAx.plot([],[])
 cpuLine, = cpuAx.plot([],[])
+memLine, = memAx.plot([],[])
 
 # The line points in x,y list form
 gpuy_list = deque([0]*240)
@@ -32,12 +39,34 @@ gpux_list = deque(np.linspace(60,0,num=240))
 # The line points in x,y list form
 cpuy_list = deque([0]*240)
 cpux_list = deque(np.linspace(60,0,num=240))
+# The line points in x,y list form
+memy_list = deque([0]*240)
+memx_list = deque(np.linspace(60,0,num=240))
 
 fill_lines_gpu=0
 fill_lines_cpu=0
+fill_lines_mem=0
 
 cpu_user_prev=0
 cpu_idle_prev=0
+
+def initMemGraph():
+    global memAx
+    global memLine
+    global fill_lines_mem
+
+    memAx.set_xlim(60, 0)
+    memAx.set_ylim(-5, 105)
+    memAx.set_title('Memory History')
+    memAx.set_ylabel('Memory Usage (%)')
+    memAx.set_xlabel('Seconds');
+    memAx.grid(color='gray', linestyle='dotted', linewidth=1)
+
+    memLine.set_data([],[])
+    fill_lines_mem=memAx.fill_between(memLine.get_xdata(),50,0)
+
+    return [memLine] + [fill_lines_mem]
+
 
 def initGpuGraph():
     global gpuAx
@@ -73,6 +102,30 @@ def initCpuGraph():
 
     return [cpuLine] + [fill_lines_cpu]
 
+def updateMemGraph(frame):
+    global fill_lines_mem
+    global memy_list
+    global memx_list
+    global memLine
+    global memAx
+ 
+    x=subprocess.check_output(["adb shell cat /proc/meminfo"],shell=True)
+    x=x.split()
+    memTotal=x[1]
+    memAvail=x[7]
+    if x != "":
+        memy_list.popleft()
+	freeMem=int(memTotal)-int(memAvail)
+	perctFree=float(freeMem/float(memTotal))
+	print(perctFree*100)
+        memy_list.append(perctFree*100)
+
+        memLine.set_data(memx_list,memy_list)
+
+        fill_lines_mem.remove()
+        fill_lines_mem=memAx.fill_between(memx_list,0,memy_list, facecolor='cyan', alpha=0.50)
+
+    return [memLine] + [fill_lines_mem]
 
 def updateGpuGraph(frame):
     global fill_lines_gpu
@@ -90,7 +143,7 @@ def updateGpuGraph(frame):
         gpuLine.set_data(gpux_list,gpuy_list)
 
         fill_lines_gpu.remove()
-        fill_lines_gpu=gpuAx.fill_between(gpux_list,0,gpuy_list, facecolor='cyan', alpha=0.50)
+        fill_lines_gpu=gpuAx.fill_between(gpux_list,0,gpuy_list, facecolor='yellow', alpha=0.30)
 
     return [gpuLine] + [fill_lines_gpu]
 
@@ -138,9 +191,13 @@ def updateCpuGraph(frame):
 
 # Keep a reference to the FuncAnimation, so it does not get garbage collected
 gpuAnimation = FuncAnimation(figGpu, updateGpuGraph, frames=200,
-                    init_func=initGpuGraph,  interval=1000, blit=True)
+                    init_func=initGpuGraph,  interval=250, blit=True)
 cpuAnimation = FuncAnimation(figCpu, updateCpuGraph, frames=200,
-                    init_func=initCpuGraph,  interval=1000, blit=True)
+                    init_func=initCpuGraph,  interval=500, blit=True)
+memAnimation = FuncAnimation(figMem, updateMemGraph, frames=200,
+                    init_func=initMemGraph,  interval=500, blit=True)
+
+
 
 
 plt.show()
