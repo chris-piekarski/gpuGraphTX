@@ -32,6 +32,10 @@ figMem.canvas.set_window_title('Memory Activity Monitor')
 gpuLine, = gpuAx.plot([],[])
 cpuLine, = cpuAx.plot([],[])
 memLine, = memAx.plot([],[])
+memCachedLine, = memAx.plot([],[])
+memCachedLine.set_label('Cached')
+memLine.set_label('Used')
+memAx.legend()
 
 # The line points in x,y list form
 gpuy_list = deque([0]*240)
@@ -41,6 +45,7 @@ cpuy_list = deque([0]*240)
 cpux_list = deque(np.linspace(60,0,num=240))
 # The line points in x,y list form
 memy_list = deque([0]*240)
+memcy_list = deque([0]*240)
 memx_list = deque(np.linspace(60,0,num=240))
 
 fill_lines_gpu=0
@@ -63,6 +68,7 @@ def initMemGraph():
     memAx.grid(color='gray', linestyle='dotted', linewidth=1)
 
     memLine.set_data([],[])
+    memCachedLine.set_data([],[])
     fill_lines_mem=memAx.fill_between(memLine.get_xdata(),50,0)
 
     return [memLine] + [fill_lines_mem]
@@ -105,27 +111,36 @@ def initCpuGraph():
 def updateMemGraph(frame):
     global fill_lines_mem
     global memy_list
+    global memcy_list
     global memx_list
     global memLine
+    global memCachedLine
     global memAx
  
     x=subprocess.check_output(["adb shell cat /proc/meminfo"],shell=True)
     x=x.split()
     memTotal=x[1]
     memAvail=x[7]
+    memCach=x[13]
     if x != "":
         memy_list.popleft()
-	freeMem=int(memTotal)-int(memAvail)
-	perctFree=float(freeMem/float(memTotal))
-	print(perctFree*100)
-        memy_list.append(perctFree*100)
+        memcy_list.popleft()
+	usedMem=int(memTotal)-int(memAvail)
+        perctCached=float(memCach)/float(memTotal)
+	perctUsed=float(usedMem/float(memTotal))
+	#print(perctCached*100)
+        memy_list.append(perctUsed*100)
+	memcy_list.append(perctCached*100)
 
         memLine.set_data(memx_list,memy_list)
+        memCachedLine.set_data(memx_list,memcy_list)
 
         fill_lines_mem.remove()
         fill_lines_mem=memAx.fill_between(memx_list,0,memy_list, facecolor='cyan', alpha=0.50)
+        fill_lines_memc=memAx.fill_between(memx_list,0,memcy_list, facecolor='brown', alpha=0.50)
 
-    return [memLine] + [fill_lines_mem]
+
+    return [memLine] + [fill_lines_mem] + [memCachedLine] + [fill_lines_memc]
 
 def updateGpuGraph(frame):
     global fill_lines_gpu
