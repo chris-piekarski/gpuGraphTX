@@ -51,6 +51,7 @@ memx_list = deque(np.linspace(60,0,num=240))
 fill_lines_gpu=0
 fill_lines_cpu=0
 fill_lines_mem=0
+fill_lines_memc=0
 
 cpu_user_prev=0
 cpu_idle_prev=0
@@ -110,6 +111,7 @@ def initCpuGraph():
 
 def updateMemGraph(frame):
     global fill_lines_mem
+    global fill_lines_memc
     global memy_list
     global memcy_list
     global memx_list
@@ -118,11 +120,11 @@ def updateMemGraph(frame):
     global memAx
  
     x=subprocess.check_output(["adb shell cat /proc/meminfo"],shell=True)
-    x=x.split()
-    memTotal=x[1]
-    memAvail=x[7]
-    memCach=x[13]
     if x != "":
+	x=x.split()
+    	memTotal=x[1]
+    	memAvail=x[7]
+    	memCach=x[13]
         memy_list.popleft()
         memcy_list.popleft()
 	usedMem=int(memTotal)-int(memAvail)
