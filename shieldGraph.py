@@ -118,29 +118,31 @@ def updateMemGraph(frame):
     global memLine
     global memCachedLine
     global memAx
- 
-    x=subprocess.check_output(["adb shell cat /proc/meminfo"],shell=True)
-    if x != "":
-	x=x.split()
-    	memTotal=x[1]
-    	memAvail=x[7]
-    	memCach=x[13]
-        memy_list.popleft()
-        memcy_list.popleft()
-	usedMem=int(memTotal)-int(memAvail)
-        perctCached=float(memCach)/float(memTotal)
-	perctUsed=float(usedMem/float(memTotal))
-	#print(perctCached*100)
-        memy_list.append(perctUsed*100)
-	memcy_list.append(perctCached*100)
+    
+    try:
+        x=subprocess.check_output(["adb shell cat /proc/meminfo"],shell=True)
+        if x != "":
+	    x=x.split()
+    	    memTotal=x[1]
+    	    memAvail=x[7]
+    	    memCach=x[13]
+            memy_list.popleft()
+            memcy_list.popleft()
+            usedMem=int(memTotal)-int(memAvail)
+            perctCached=float(memCach)/float(memTotal)
+	    perctUsed=float(usedMem/float(memTotal))
+	    #print(perctCached*100)
+            memy_list.append(perctUsed*100)
+	    memcy_list.append(perctCached*100)
 
-        memLine.set_data(memx_list,memy_list)
-        memCachedLine.set_data(memx_list,memcy_list)
+            memLine.set_data(memx_list,memy_list)
+            memCachedLine.set_data(memx_list,memcy_list)
 
-        fill_lines_mem.remove()
-        fill_lines_mem=memAx.fill_between(memx_list,0,memy_list, facecolor='cyan', alpha=0.50)
-        fill_lines_memc=memAx.fill_between(memx_list,0,memcy_list, facecolor='brown', alpha=0.50)
-
+            fill_lines_mem.remove()
+            fill_lines_mem=memAx.fill_between(memx_list,0,memy_list, facecolor='cyan', alpha=0.50)
+            fill_lines_memc=memAx.fill_between(memx_list,0,memcy_list, facecolor='brown', alpha=0.50)
+    except Exception:
+        pass
 
     return [memLine] + [fill_lines_mem] + [memCachedLine] + [fill_lines_memc]
 
@@ -150,17 +152,20 @@ def updateGpuGraph(frame):
     global gpux_list
     global gpuLine
     global gpuAx
- 
-    x=subprocess.check_output(["adb shell cat /sys/devices/gpu.0/load"],shell=True)
-    if x != "":
-        gpuy_list.popleft()
-        # The GPU load is stored as a percentage * 10, e.g 256 = 25.6%
-        gpuy_list.append(int(x)/10)
 
-        gpuLine.set_data(gpux_list,gpuy_list)
+    try: 
+        x=subprocess.check_output(["adb shell cat /sys/devices/gpu.0/load"],shell=True)
+        if x != "":
+            gpuy_list.popleft()
+            # The GPU load is stored as a percentage * 10, e.g 256 = 25.6%
+            gpuy_list.append(int(x)/10)
 
-        fill_lines_gpu.remove()
-        fill_lines_gpu=gpuAx.fill_between(gpux_list,0,gpuy_list, facecolor='yellow', alpha=0.30)
+            gpuLine.set_data(gpux_list,gpuy_list)
+
+            fill_lines_gpu.remove()
+            fill_lines_gpu=gpuAx.fill_between(gpux_list,0,gpuy_list, facecolor='yellow', alpha=0.30)
+    except Exception:
+        pass
 
     return [gpuLine] + [fill_lines_gpu]
 
@@ -173,34 +178,37 @@ def updateCpuGraph(frame):
     global cpuAx
     global cpu_user_prev
     global cpu_idle_prev
- 
-    dump=subprocess.check_output(["adb shell cat /proc/stat"],shell=True).decode("utf-8")
-    if dump != "":
-        dump=dump.split("\n")
-        tl=dump[0].split()
-        cpu_user=int(tl[1])+int(tl[2])+int(tl[3])+int(tl[4])+int(tl[5])+int(tl[6])+int(tl[7])
-        cpu_idle=int(tl[4])
 
-        if cpu_user_prev == 0 or cpu_idle_prev == 0:
-            cpu_user_prev = cpu_user
-            cpu_idle_prev = cpu_idle
-            return [ ]
+    try: 
+        dump=subprocess.check_output(["adb shell cat /proc/stat"],shell=True).decode("utf-8")
+        if dump != "":
+            dump=dump.split("\n")
+            tl=dump[0].split()
+            cpu_user=int(tl[1])+int(tl[2])+int(tl[3])+int(tl[4])+int(tl[5])+int(tl[6])+int(tl[7])
+            cpu_idle=int(tl[4])
 
-        diff_user=cpu_user - cpu_user_prev
-        diff_idle=cpu_idle - cpu_idle_prev
-        diff_usage=(1000*(diff_user-diff_idle)/diff_user+5)/10
+            if cpu_user_prev == 0 or cpu_idle_prev == 0:
+                cpu_user_prev = cpu_user
+                cpu_idle_prev = cpu_idle
+                return [ ]
+
+            diff_user=cpu_user - cpu_user_prev
+            diff_idle=cpu_idle - cpu_idle_prev
+            diff_usage=(1000*(diff_user-diff_idle)/diff_user+5)/10
         
-        cpu_user_prev=cpu_user
-        cpu_idle_prev=cpu_idle
+            cpu_user_prev=cpu_user
+            cpu_idle_prev=cpu_idle
 
-        cpuy_list.popleft()
+            cpuy_list.popleft()
     
-        cpuy_list.append(round(float(diff_usage)))
+            cpuy_list.append(round(float(diff_usage)))
 
-        cpuLine.set_data(cpux_list,cpuy_list)
+            cpuLine.set_data(cpux_list,cpuy_list)
 
-        fill_lines_cpu.remove()
-        fill_lines_cpu=cpuAx.fill_between(cpux_list,0,cpuy_list, facecolor='red', alpha=0.50)
+            fill_lines_cpu.remove()
+            fill_lines_cpu=cpuAx.fill_between(cpux_list,0,cpuy_list, facecolor='red', alpha=0.50)
+    except Exception:
+        pass
 
     return [cpuLine] + [fill_lines_cpu]
 
